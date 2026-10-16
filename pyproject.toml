@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "barcode-service"
+version = "0.1.0"
+description = "Barcode decoding service: YOLO detection, super-resolution and multi-decoder fallback behind a FastAPI API."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Billy" }]
+dependencies = [
+    "numpy",
+    "opencv-python-headless",
+    "scikit-image",
+    "pyzbar",
+    "zxing-cpp",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic-settings",
+    "python-multipart",
+    "httpx",
+]
+
+[project.optional-dependencies]
+cpu = ["onnxruntime"]
+gpu = ["onnxruntime-gpu"]
+openvino = ["openvino"]
+
+[project.scripts]
+barcode-service = "barcode_service.cli:main"
+
+[dependency-groups]
+dev = ["pytest", "pytest-cov", "ruff", "pre-commit"]
+# Offline model export only; never synced in the service image.
+export = ["torch", "ultralytics", "super-image", "onnx"]
+models = ["huggingface-hub"]
+
+[tool.uv]
+default-groups = ["dev"]
+conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/barcode_service"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "models: needs real model files (auto-skipped when absent)",
+    "gpu: needs a CUDA GPU (auto-skipped when absent)",
+    "e2e: needs a running service over HTTP",
+]

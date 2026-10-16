@@ -1,0 +1,15 @@
+# Override file: docker compose -f compose.yaml -f compose.gpu.yaml up --build
+# Needs the NVIDIA Container Toolkit on the host. Select the CUDA backend with
+# BARCODE_DETECTOR_BACKEND=ort-cuda and/or BARCODE_UPSCALER_BACKEND=ort-cuda (for example in .env).
+services:
+  barcode-service:
+    build:
+      target: gpu
+    image: barcode-service:gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

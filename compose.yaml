@@ -1,0 +1,41 @@
+# CPU service. For GPU: docker compose -f compose.yaml -f compose.gpu.yaml up --build
+#
+# The container always listens on 8080; BARCODE_HOST_PORT only changes the published host port.
+services:
+  barcode-service:
+    build:
+      context: .
+      target: cpu
+      # Forwarded from your shell only when set; nothing is hardcoded.
+      args:
+        - HTTP_PROXY
+        - HTTPS_PROXY
+        - NO_PROXY
+    image: barcode-service:cpu
+    ports:
+      - "${BARCODE_HOST_PORT:-8080}:8080"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Pinned after env_file so the published port mapping and healthcheck stay consistent.
+      BARCODE_PORT: "8080"
+      BARCODE_MODELS_DIR: /app/models
+    volumes:
+      - ./models:/app/models:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3

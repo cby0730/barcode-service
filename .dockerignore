@@ -1,0 +1,16 @@
+.git
+.venv
+__pycache__
+*.py[cod]
+tmp
+models/*
+!models/README.md
+.env
+dist
+build
+*.egg-info
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+tests
